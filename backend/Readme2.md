@@ -434,3 +434,198 @@ schema.prisma = tum kya database structure chahte ho
 prisma generate = us structure ke according Prisma Client ka code banana
 
 Aur generate database mein table create/update nahi karta. Database structure change karne ke liye prisma migrate / prisma db push use hota hai.
+JWT Setup in Hono — Signup Route
+1. Import JWT
+import { sign } from "hono/jwt";
+
+sign() ka use JWT token create/generate karne ke liye hota hai.
+2. JWT Secret
+.env mein:
+JWT_SECRET="my-super-secret-key"
+
+Ye secret JWT ko sign karne ke liye use hota hai.
+Production mein Cloudflare secret:
+npx wrangler secret put JWT_SECRET
+
+3. Add JWT Secret to Bindings
+type Bindings = {
+  DATABASE_URL: string;
+  JWT_SECRET: string;
+};
+
+Ab Hono Worker ko pata hai ki environment mein dono values available hain:
+DATABASE_URL
+JWT_SECRET
+
+4. Signup Route
+app.post("/api/v1/signup", async (c) => {
+  const adapter = new PrismaNeon({
+    connectionString: c.env.DATABASE_URL,
+  });
+
+  const prisma = new PrismaClient({
+    adapter,
+  });
+
+  const body = await c.req.json();
+
+  try {
+    const user = await prisma.user.create({ //ye prisma client ka kam hai 
+      data: {
+        email: body.email,
+        password: body.password,
+      },
+    });
+
+    const token = await sign(
+      {
+        id: user.id,
+      },
+      c.env.JWT_SECRET
+    );
+
+    return c.json({
+      message: "Signup successful",
+      token,
+    });
+
+  } catch (e) {
+    return c.status(403);
+  }
+});
+
+5. JWT Generation Flow
+User signup request bhejta hai:
+{
+  "email": "satyam@gmail.com",
+  "password": "123456"
+}
+
+Flow:
+POST /api/v1/signup
+        ↓
+   Request Body
+        ↓
+   PrismaNeon
+        ↓
+   PrismaClient
+        ↓
+   User created
+        ↓
+     user.id
+        ↓
+      sign()
+        ↓
+   JWT Token
+        ↓
+    Response
+
+6. sign() kaise kaam karta hai?
+const token = await sign(
+  {
+    id: user.id,
+  },
+  c.env.JWT_SECRET
+);
+
+Yahan do important cheezein hain:
+Payload
+{
+  id: user.id
+}
+
+Ye JWT ke andar information hai.
+Example:
+{
+  "id": "abc-123"
+}
+
+Secret
+c.env.JWT_SECRET
+
+Ye JWT ko sign karne ke liye secret key hai.
+So:
+Payload
+   +
+JWT_SECRET
+   ↓
+sign()
+   ↓
+JWT Token
+
+7. Response
+Generated token client ko bhej dete hain:
+return c.json({
+  message: "Signup successful",
+  token,
+});
+
+Response:
+{
+  "message": "Signup successful",
+  "token": "eyJhbGciOiJIUzI1NiIs..."
+}
+
+Client future protected requests mein is token ko use karega.
+8. sign, verify, decode
+Hono JWT mein generally teen important functions milte hain:
+Function	Purpose
+sign()	JWT create karta hai
+verify()	JWT genuine/valid hai ya nahi check karta hai
+decode()	JWT ka payload read/decode karta hai
+
+
+Abhi signup mein:
+sign()
+
+ki zarurat hai.
+Baad mein protected route mein:
+verify()
+
+use karenge.
+9. Complete Authentication Flow
+SIGNUP
+  ↓
+User create
+  ↓
+JWT generate
+  ↓
+Client gets JWT
+
+Then later:
+LOGIN
+  ↓
+Credentials check
+  ↓
+JWT generate
+  ↓
+Client gets JWT
+
+Then protected API:
+Client
+  ↓
+JWT भेजता है
+  ↓
+verify()
+  ↓
+Valid?
+ ├── YES → API access
+ └── NO  → 401/403
+
+Important
+Abhi learning setup mein:
+password: body.password
+
+plain password store kar raha hai. Real application mein password ko hash karke store karna chahiye (e.g. bcrypt/Argon2).
+Also, JWT secret ko source code mein hardcode mat karo:
+// ❌
+sign(payload, "my-secret")
+
+Environment/Cloudflare secret use karo:
+// ✅
+sign(payload, c.env.JWT_SECRET)
+
+One-line memory trick
+sign() = JWT banana
+verify() = JWT check karna
+decode() = JWT ke andar ka data read karna
