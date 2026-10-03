@@ -2,6 +2,10 @@ import { Hono } from "hono";
 import { verify } from "hono/jwt";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../generated/prisma/client";
+import {
+  createPostInput,
+  updatePostInput,
+} from "@jhasatyam/medium-common";
 
 type Bindings = {
   DATABASE_URL: string;
@@ -68,10 +72,21 @@ blogRouter.post("/", async (c) => {
 
   const body = await c.req.json();
 
+  const result = createPostInput.safeParse(body);
+
+  if (!result.success) {
+    return c.json(
+      {
+        error: "Invalid input",
+      },
+      400
+    );
+  }
+
   const post = await prisma.post.create({
     data: {
-      title: body.title,
-      content: body.content,
+      title: result.data.title,
+      content: result.data.content,
       authorId: userId,
     },
   });
@@ -97,10 +112,21 @@ blogRouter.put("/", async (c) => {
 
   const body = await c.req.json();
 
+  const result = updatePostInput.safeParse(body);
+
+  if (!result.success) {
+    return c.json(
+      {
+        error: "Invalid input",
+      },
+      400
+    );
+  }
+
   //? first find the post
   const post = await prisma.post.findUnique({
     where: {
-      id: body.id,
+      id: result.data.id,
     },
   });
 
@@ -117,11 +143,11 @@ blogRouter.put("/", async (c) => {
   //? update the post
   await prisma.post.update({
     where: {
-      id: body.id,
+      id: result.data.id,
     },
     data: {
-      title: body.title,
-      content: body.content,
+      title: result.data.title,
+      content: result.data.content,
     },
   });
 
@@ -176,5 +202,3 @@ blogRouter.get("/:id", async (c) => {
 
   return c.json(post);
 });
-
-

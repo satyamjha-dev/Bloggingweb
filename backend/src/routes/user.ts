@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { sign } from "hono/jwt";
-
+import { signupInput } from "@jhasatyam/medium-common";
+import { signinInput } from "@jhasatyam/medium-common";
 
 type Bindings = {
   DATABASE_URL: string;
@@ -20,19 +21,25 @@ userRouter.post("/signup", async (c) => {
     adapter,
   });
   const body = await c.req.json();
-  // const { success } = singupInput.safeParse(body);
-  // if (!success) {
-  //   return c.json({ error: "Invalid input" }, 400); //! agar input invalid hai to return kardo 400 error
-  // }
+  const result = signupInput.safeParse(body);
+
+if (!result.success) {
+  return c.json(
+    {
+      error: "Invalid input",
+    },
+    400
+  );
+}
   //sanatize the input 
   try {
     // Create user in database
     const user = await prisma.user.create({
-      data: {
-        email: body.email,
-        password: body.password,
-      },
-    });
+  data: {
+    email: result.data.email,
+    password: result.data.password,
+  },
+});
     // Generate JWT
     const token = await sign(
       {
@@ -58,7 +65,18 @@ userRouter.post('/signin', async (c) => {
   const prisma = new PrismaClient({
     adapter,
   });
-  const body = await  c.req.json();
+ const body = await c.req.json();
+
+ const { success } = signinInput.safeParse(body); //? validate the input using zod
+
+if (!success) {
+  return c.json(
+    {
+      error: "Invalid input",
+    },
+    400
+  );
+}
   const  user = await prisma.user.findUnique({
     where: {
       email: body.email
