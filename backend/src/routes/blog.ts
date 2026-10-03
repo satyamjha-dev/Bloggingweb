@@ -10,7 +10,7 @@ type Bindings = {
 
 type variables = {
   userId: string;
-};
+};//! variables for the blog routes
 
 export const blogRouter = new Hono<{
   Bindings: Bindings;

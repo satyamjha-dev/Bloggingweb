@@ -1,7 +1,4 @@
 import { Hono } from "hono";
-import { PrismaClient } from "./generated/prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { sign,verify } from "hono/jwt";
 import { blogRouter } from "./routes/blog";
 import { userRouter } from "./routes/user";
 

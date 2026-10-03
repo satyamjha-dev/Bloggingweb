@@ -3,6 +3,7 @@ import { PrismaClient } from "../generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { sign } from "hono/jwt";
 
+
 type Bindings = {
   DATABASE_URL: string;
   JWT_SECRET: string;
@@ -19,6 +20,11 @@ userRouter.post("/signup", async (c) => {
     adapter,
   });
   const body = await c.req.json();
+  // const { success } = singupInput.safeParse(body);
+  // if (!success) {
+  //   return c.json({ error: "Invalid input" }, 400); //! agar input invalid hai to return kardo 400 error
+  // }
+  //sanatize the input 
   try {
     // Create user in database
     const user = await prisma.user.create({
