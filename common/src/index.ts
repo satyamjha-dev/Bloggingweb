@@ -2,13 +2,13 @@ import { z } from "zod";
 
 //! Signup validation
 export const signupInput = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(6),
 });
 
 //! Signin validation
 export const signinInput = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(6),
 });
 
