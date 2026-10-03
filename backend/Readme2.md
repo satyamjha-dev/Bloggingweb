@@ -629,3 +629,208 @@ One-line memory trick
 sign() = JWT banana
 verify() = JWT check karna
 decode() = JWT ke andar ka data read karna
+Backend Progress — 03 Oct 2026
+1. Shared Validation Package
+Created a separate shared package for request validation:
+common/
+├── src/
+│   └── index.ts
+├── dist/
+├── package.json
+└── tsconfig.json
+
+Package name:
+@jhasatyam/medium-common
+
+Zod Schemas
+Added validation schemas for:
+- Signup
+- Signin
+- Create Post
+- Update Post
+export const signupInput = z.object({
+  email: z.email(),
+  password: z.string().min(6),
+});
+
+export const signinInput = z.object({
+  email: z.email(),
+  password: z.string().min(6),
+});
+
+export const createPostInput = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+});
+
+export const updatePostInput = z.object({
+  id: z.string(),
+  title: z.string().min(1),
+  content: z.string().min(1),
+});
+
+Type Inference
+Used z.infer to generate TypeScript types directly from schemas:
+export type SignupInput = z.infer<typeof signupInput>;
+export type SigninInput = z.infer<typeof signinInput>;
+export type CreatePostInput = z.infer<typeof createPostInput>;
+export type UpdatePostInput = z.infer<typeof updatePostInput>;
+
+2. Published Shared Package to NPM
+Published the package publicly on npm.
+Final published version:
+@jhasatyam/medium-common@1.0.1
+
+Package can now be installed using:
+npm install @jhasatyam/medium-common@1.0.1
+
+3. Backend Integration
+Backend now uses the shared npm package instead of defining validation schemas inside the backend.
+User Routes
+Imported:
+import {
+  signupInput,
+  signinInput,
+} from "@jhasatyam/medium-common";
+
+Blog Routes
+Imported:
+import {
+  createPostInput,
+  updatePostInput,
+} from "@jhasatyam/medium-common";
+
+4. Signup Validation
+Signup request is validated before creating the user:
+const result = signupInput.safeParse(body);
+
+if (!result.success) {
+  return c.json(
+    {
+      error: "Invalid input",
+    },
+    400
+  );
+}
+
+Validated data is then used:
+result.data.email
+result.data.password
+
+5. Signin Validation
+Signin now uses the signin schema, rather than accidentally using the signup schema:
+const result = signinInput.safeParse(body);
+
+if (!result.success) {
+  return c.json(
+    {
+      error: "Invalid input",
+    },
+    400
+  );
+}
+
+6. Create Blog Validation
+Create-blog requests are validated using:
+createPostInput.safeParse(body);
+
+Validated values are used for Prisma:
+title: result.data.title,
+content: result.data.content,
+
+7. Update Blog Validation
+Update-blog requests are validated using:
+updatePostInput.safeParse(body);
+
+Validated values are used:
+id: result.data.id,
+title: result.data.title,
+content: result.data.content,
+
+8. JWT Authentication
+Blog routes are protected using JWT middleware.
+Authorization header:
+Authorization: Bearer <token>
+
+Token is verified using:
+verify(
+  authheader,
+  c.env.JWT_SECRET,
+  "HS256"
+);
+
+The user's ID is stored in Hono context:
+c.set("userId", response.id);
+
+Routes can then access it using:
+const userId = c.get("userId");
+
+9. Current Blog APIs
+Create Blog
+POST /api/v1/blog
+
+Protected by JWT.
+Update Blog
+PUT /api/v1/blog
+
+Protected by JWT.
+Get All Blogs
+GET /api/v1/blog/bulk
+
+Get Single Blog
+GET /api/v1/blog/:id
+
+10. Current Architecture
+                    ┌─────────────────────┐
+                    │      Frontend       │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │       Hono API      │
+                    │     Cloudflare      │
+                    └──────────┬──────────┘
+                               │
+              ┌────────────────┴────────────────┐
+              │                                 │
+              ▼                                 ▼
+      ┌─────────────────┐              ┌─────────────────┐
+      │  Zod Validation │              │ JWT Middleware  │
+      │ medium-common   │              │ Authentication  │
+      └────────┬────────┘              └────────┬────────┘
+               │                                │
+               └──────────────┬─────────────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │       Prisma        │
+                    └──────────┬──────────┘
+                               ▼
+                    ┌─────────────────────┐
+                    │     PostgreSQL      │
+                    │        Neon         │
+                    └─────────────────────┘
+
+Today's Major Milestone
+✅ Shared Zod package created
+✅ Zod schemas created
+✅ z.infer types created
+✅ Package tested locally
+✅ Package published to npm
+✅ @jhasatyam/medium-common@1.0.1 published
+✅ Backend connected to shared package
+✅ Signup validation
+✅ Signin validation
+✅ Create blog validation
+✅ Update blog validation
+✅ JWT authentication middleware
+
+Next
+Frontend (React)
+       ↓
+Connect APIs
+       ↓
+Test complete application
+       ↓
+Cloudflare deployment
+       ↓
+Production testing
