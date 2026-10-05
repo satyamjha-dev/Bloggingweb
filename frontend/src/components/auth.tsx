@@ -10,7 +10,8 @@ interface LabeledInputProps {
   label: string;
   placeholder?: string;
   type?: "text" | "email" | "password";
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;  
+  // noidea of this line
 }
 
 function LabeledInput({ label, placeholder, type = "text", onChange }: LabeledInputProps) {
@@ -31,12 +32,12 @@ function LabeledInput({ label, placeholder, type = "text", onChange }: LabeledIn
 interface AuthFormProps {
   type: "signup" | "signin";
   // onUsernameChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void; //request form single input change
   onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: () => void;
 }
 
-type AuthFormInput = {
+type AuthFormInput = { 
   email: string;
   password: string;
 };
@@ -48,7 +49,7 @@ export function AuthForm({
   onPasswordChange, 
   onSubmit 
 }: AuthFormProps) {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // useNavigate is a hook from react-router-dom that allows you to programmatically navigate to different routes in your application. In this case, it's used to redirect the user to the "/Blog" route after successful authentication.
   const isSignUp = type === "signup";
   const [postinput, setPostinput] = useState<AuthFormInput>({
     email: "",
@@ -59,8 +60,8 @@ export function AuthForm({
   try {
     const schema = isSignUp ? signupInput : signinInput;
 
-    const result = schema.safeParse(postinput);
-
+    const result = schema.safeParse(postinput); //! what is the meaning of safeparse  yaha pe data aagya hai 
+    //! zod validation yahi pe ho gya hai 
     if (!result.success) {
       console.log(result.error);
       return;
@@ -75,9 +76,9 @@ export function AuthForm({
 
     const jwt = response.data.token;
 
-    localStorage.setItem("jwt", jwt);
+    localStorage.setItem("jwt", jwt); // Store the JWT in local storage for future requests show in network tab
 
-    navigate("/Blog");
+    navigate("/Blog"); // !Navigate to the blog page after successful authentication
   } catch (error) {
     console.error("Error during authentication:", error);
   }
