@@ -1,8 +1,12 @@
+import { Link } from "react-router-dom";
+
 interface BlogCardProps {
+
   authorName: string;
   title: string;
   content: string;
   publishedDate: string;
+  id : string;
 }
 
 export const BlogCard = ({
@@ -10,9 +14,11 @@ export const BlogCard = ({
   title,
   content,
   publishedDate,
+  id
 }: BlogCardProps) => {
   return (
-    <div className="flex flex-col gap-2 ">
+    <Link to={`/blog/${id}`}>
+    <div className=" p-4 flex flex-col gap-2 border-b border-gray-200 cursor-pointer">
       <div> 
         <Avatar authorName={authorName} />
         <span className="text-xs font-serif">{authorName}.  </span>
@@ -26,18 +32,21 @@ export const BlogCard = ({
         <div className="text-xs text-muted-foreground">
             {`${Math.ceil(content.length / 100)} min read`}
         </div>
-        <div className="bg-slate-200 h-1 w-full">
-
-        </div>
     </div>
+    </Link>
   );
 };
 
-function  Avatar ({authorName}:{authorName:string}) {
-    return (
-       <div className="relative bg-gray-600  inline-flex items-center justify-center w-5 h-5 overflow-hidden bg-neutral-tertiary rounded-full">
-        <span className="font-medium text-xs">{authorName[0]}</span>
-        </div>
+export const Avatar = ({ authorName, size = 4 }: { authorName: string; size?: number }) => {
+  // Convert Tailwind size scale to rem units (e.g., size 4 = 1rem = 16px)
+  const dimension = `${size * 0.25}rem`;
 
-    );
-}
+  return (
+    <div
+      className="relative bg-gray-600 inline-flex items-center justify-center overflow-hidden bg-neutral-tertiary rounded-full dark:bg-neutral-700"
+      style={{ width: dimension, height: dimension }}
+    >
+      <span className="font-medium text-xs uppercase">{authorName[0]}</span>
+    </div>
+  );
+};

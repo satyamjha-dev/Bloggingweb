@@ -57,32 +57,30 @@ export function AuthForm({
   });
 
   async function sendrequest() {
-  try {
-    const schema = isSignUp ? signupInput : signinInput;
+    try {
+      const schema = isSignUp ? signupInput : signinInput;
 
-    const result = schema.safeParse(postinput); //! what is the meaning of safeparse  yaha pe data aagya hai 
-    //! zod validation yahi pe ho gya hai 
-    if (!result.success) {
-      console.log(result.error);
-      return;
+      const result = schema.safeParse(postinput);
+      if (!result.success) {
+        console.log(result.error);
+        return;
+      }
+
+      const response = await axios.post(
+        `http://localhost:8787/api/v1/user/${isSignUp ? "signup" : "signin"}`,
+        result.data
+      );
+
+      const jwt = response.data.token || response.data.jwt;
+
+      if (jwt) {
+        localStorage.setItem("jwt", jwt);
+        navigate("/blogs");
+      }
+    } catch (error) {
+      console.error("Error during authentication:", error);
     }
-
-    const response = await axios.post(
-      `http://localhost:8787/api/v1/user/${
-        isSignUp ? "signup" : "signin"
-      }`,
-      result.data
-    );
-
-    const jwt = response.data.token;
-
-    localStorage.setItem("jwt", jwt); // Store the JWT in local storage for future requests show in network tab
-
-    navigate("/Blog"); // !Navigate to the blog page after successful authentication
-  } catch (error) {
-    console.error("Error during authentication:", error);
   }
-}
 
   return (
     
