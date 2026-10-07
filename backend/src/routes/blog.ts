@@ -59,7 +59,7 @@ blogRouter.use("/*", async (c, next) => {
 
 // ==================== CREATE BLOG ====================
 
-blogRouter.post("/", async (c) => {
+blogRouter.post("/add", async (c) => {
   const userId = c.get("userId");
 
   const adapter = new PrismaNeon({
@@ -99,7 +99,7 @@ blogRouter.post("/", async (c) => {
 
 // ==================== UPDATE BLOG ====================
 
-blogRouter.put("/", async (c) => {
+blogRouter.put("/update", async (c) => {
   const userId = c.get("userId");
 
   const adapter = new PrismaNeon({
@@ -167,7 +167,20 @@ blogRouter.get("/bulk", async (c) => {
     adapter,
   });
 
-  const posts = await prisma.post.findMany({});
+  const posts = await prisma.post.findMany({
+    select: {
+      id: true,
+      content: true,
+      title: true,
+      authorId: true,
+      author: {
+        select: {
+          name: true,
+        }
+      }
+    },
+  });
+
 
   return c.json(posts);
 });
